@@ -1,0 +1,46 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "train_no": "12301",
+        "name": "Demo route"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            88.3639,
+            22.5726
+          ],
+          [
+            88.3426,
+            22.5839
+          ],
+          [
+            88.3227,
+            22.5958
+          ],
+          [
+            88.3074,
+            22.5837
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "Howrah Jn"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          88.3426,
+          22.5839
+        ]
+      }
+    }
+  ]
+}
