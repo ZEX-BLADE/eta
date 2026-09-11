@@ -1,34 +1,31 @@
-const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API = (import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/\/$/, "");
 
-export async function startTrain(trainNo) {
-  const res = await fetch(`${API}/api/train/start`, {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({train_no: trainNo})
-  });
-  if (!res.ok) throw new Error("Unable to start train");
-  return res.json();
+async function request(path, options = {}, timeoutMs = 7000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: { Accept: "application/json", "Content-Type": "application/json", ...(options.headers || {}) }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
-export async function getEta(trainNo) {
-  const res = await fetch(`${API}/api/train/${trainNo}/eta`);
-  if (!res.ok) throw new Error("Unable to fetch ETA");
-  return res.json();
-}
+export const api = {
+  health: () => request("/health"),
+  start: (train) => request("/api/train/start", {method:"POST", body:JSON.stringify({train_no:train})}),
+  eta: (train) => request(`/api/train/${encodeURIComponent(train)}/eta`),
+  telemetry: (train) => request(`/api/train/${encodeURIComponent(train)}/telemetry`),
+  route: (train) => request(`/api/train/${encodeURIComponent(train)}/route`),
+  schedule: (train) => request(`/api/train/${encodeURIComponent(train)}/schedule`),
+};
 
-export async function getRoute(trainNo) {
-  const res = await fetch(`${API}/api/train/${trainNo}/route`);
-  if (!res.ok) throw new Error("Unable to fetch route");
-  return res.json();
-}
-
-export async function getSchedule(trainNo) {
-  const res = await fetch(`${API}/api/train/${trainNo}/schedule`);
-  if (!res.ok) throw new Error("Unable to fetch schedule");
-  return res.json();
-}
-
-export function telemetrySocket(trainNo) {
-  const url = API.replace("http://", "ws://").replace("https://", "wss://");
-  return new WebSocket(`${url}/ws/telemetry/${trainNo}`);
+export function telemetrySocket(train) {
+  const wsBase = API.replace(/^http:/, "ws:").replace(/^https:/, "wss:");
+  return new WebSocket(`${wsBase}/ws/telemetry/${encodeURIComponent(train)}`);
 }
